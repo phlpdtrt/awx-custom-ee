@@ -1,0 +1,28 @@
+name: Deploy Image to GHCR
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+      build-and-push-image:
+        runs-on: ubuntu-latest
+        steps:
+          - name: 'Checkout GitHub Action'
+            uses: actions/checkout@main
+
+          - name: 'Login to GitHub Container Registry'
+            uses: docker/login-action@v1
+            with:
+              registry: ghcr.io
+              username: ${{github.actor}}
+              password: ${{secrets.GITHUB_TOKEN}}
+
+          - name: 'Build Inventory Image'
+            run: |
+              python3 -m pip install ansible-builder
+              ansible-builder build --tag ghcr.io/phlpdtrt/awx-custom-ee:latest --container-runtime docker --verbosity 3
+              docker push ghcr.io/phlpdtrt/awx-custom-ee:latest
+            working-directory: ./builder
